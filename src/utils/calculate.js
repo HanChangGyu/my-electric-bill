@@ -10,6 +10,8 @@ export const calculateTotalUsage = (selectedAppliances) => {
     const power = Number(app.power) || 0;
     const hours = Number(app.hours) || 0;
     
+    const type = app.type || 'periodic';
+    
     // 공식: (입 크기W * 먹는 시간h * 30일) / 1000 = 한 달 사료량(kWh)
     const monthlyKwh = (power * hours * 30) / 1000;
     
