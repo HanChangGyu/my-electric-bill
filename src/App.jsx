@@ -8,16 +8,21 @@ function App() {
   
   // 가전제품별 사용 시간을 저장할 메모지예요. { fridge: 0, aircon: 0 ... }
   const [hoursData, setHoursData] = useState(
-    APPLIANCE_LIST.reduce((acc, app) => ({ ...acc, [app.id]: 0 }), {})
+    APPLIANCE_LIST.reduce((acc, app) => ({ ...acc, 
+      [app.id]: app.type ==='always' ? 24 : 0 }), {}) // always면 24를, 아니면 0을 초기값으로 넣기
   );
 
   // [방어 코드 위치 A] 사용자가 입력창에 값을 넣을 때 1차 검문을 해요.
-  const handleHoursChange = (id, value) => {
-    // 숫자가 아니면 0으로, 24시간을 넘으면 24로 딱 잘라줍니다.
+  const handleHoursChange = (id, value) => { 
+    const appliance = APPLIANCE_LIST.find(app => app.id === id);
     let numValue = Number(value) || 0;
+    // 🛡️ [방어 로직] 성격이 'always'인 친구는 무조건 24시간으로 고정!
+    if (appliance?.type === 'always') {
+    numValue = 24;
+    } else {
     if (numValue > 24) numValue = 24;
     if (numValue < 0) numValue = 0;
-
+    }
     setHoursData(prev => ({ ...prev, [id]: numValue }));
   };
 
