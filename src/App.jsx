@@ -120,18 +120,18 @@ function App() {
 
   // ▼▼▼ 화면 레이아웃 대수술 (2단 컬럼 + 디자인 고도화) ▼▼▼
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 font-sans flex justify-center text-gray-800">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 font-sans flex justify-center text-gray-800 pb-40">
       {/* max-w-5xl로 너비를 넓혀서 2단 배치가 시원하게 보이도록 함 */}
       <div className="w-full max-w-6xl">
         
         {/* 헤더 섹션: 조금 더 현대적인 타이포그래피 적용 */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight">
+          <h1 className="text-3xl lg:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight break-keep">
             ⚡ 자취생 전기요금 박사
           </h1>
           <p className="text-gray-500 text-lg">
-            이번 달 전기세 폭탄? 미리 계산하고 스마트하게 막아보세요!
-          </p>
+            이번 달 전기세 폭탄? <br className="block lg:hidden" /> 미리 계산하고 스마트하게 막아보세요!
+</p>
         </div>
 
         {/* [핵심] PC(lg)에서는 2단 그리드, 모바일에서는 1단 */}
@@ -220,6 +220,19 @@ function App() {
                     {formatCurrency(totalBill)}
                   </span>
                 </div>
+                {/* ▼▼▼ [솔루션 1] 여기에 붙여넣기 시작! ▼▼▼ */}
+                <div className="mt-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
+                    <li>
+                      계산 결과는 <strong>한국전력공사 주택용 전력 요금표</strong>를 기반으로 한 
+                      <span className="text-blue-600 font-bold"> 예상 추정치</span>입니다.
+                    </li>
+                    <li>
+                      가전제품의 소비전력은 <strong>일반적인 평균값</strong>을 기준으로 하므로,<br /> 
+                      실제 사용하시는 제품의 효율 등급이나 모델에 따라 오차가 발생할 수 있습니다.
+                    </li>
+                  </ul>
+                </div>
               </div>
 
               <button
@@ -255,6 +268,36 @@ function App() {
               💡 <strong>Tip:</strong> 냉장고는 24시간 켜져 있는 게 정상이니 걱정 마세요! 범인은 다른 곳에 있습니다.
             </div>
           </div>
+        </div>
+      </div>
+
+<div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-40 lg:hidden safe-area-pb">
+        <div className="flex justify-between items-center max-w-5xl mx-auto">
+          
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 font-medium">예상 전기요금</span>
+            <span className="text-xl font-extrabold text-blue-600 leading-tight">
+              {formatCurrency(totalBill)}
+            </span>
+          </div>
+
+          <button
+            onClick={handleAskAI}
+            disabled={isLoading}
+            className={`py-3 px-6 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 flex items-center gap-2
+              ${isLoading 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-blue-500 to-indigo-600'}`}
+          >
+            {isLoading ? (
+              <span className="animate-spin text-lg">🌀</span>
+            ) : (
+              <>
+                <span className="text-lg">🤖</span>
+                <span>분석</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
