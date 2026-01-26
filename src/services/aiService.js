@@ -1,44 +1,83 @@
 // src/services/aiService.js
 
 /**
- * 자취생 전기요금 데이터를 바탕으로 AI의 조언을 받아오는 함수
- * @param {Object} data - { usage: 사용량(kWh), totalBill: 요금(원) }
+ * [REAL 모드] 실제 OpenAI API를 호출하여 자취생 맞춤 절약 조언을 가져옵니다.
+ * - 모델: gpt-4o-mini (가성비 최강)
+ * - 기능: 가전제품별 상세 내역을 분석하여 '전기 도둑'을 찾아냄
  */
 export const fetchAIAdvice = async (data) => {
-  // 1. 금고에서 비밀번호 꺼내기
+  // 1. .env에서 진짜 열쇠 꺼내기
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  
+  // [NEW] App.jsx에서 보낸 'details(상세 내역)'까지 받아야 함!
+  const { usage, totalBill, details } = data;
 
-  // 2. AI에게 보낼 '주문서(프롬프트)' 작성
+  // [방어 코드] 키가 없으면 아예 요청을 보내지 않음 (비용/에러 방지)
+  if (!apiKey || apiKey.includes("your_actual_api_key")) {
+    console.error("🚨 API 키가 설정되지 않았습니다!");
+    return "시스템 오류: API 키가 없습니다. 개발자에게 문의하세요.";
+  }
+
+  // 2. AI에게 보낼 '고지능 상황판(프롬프트)' 설계
+  // 단순 사용량뿐만 아니라, 어떤 가전을 얼마나 썼는지까지 알려줘서 정밀 분석을 시킴
   const userPrompt = `
-    안녕! 나는 지금 혼자 사는 자취생이야.
-    이번 달 전기 사용량은 ${data.usage}kWh이고, 예상 요금은 약 ${data.totalBill}원이야.
-    1. 이 사용량이 일반적인 1인 가구 대비 어느 정도인지 분석해줘.
-    2. 돈을 아낄 수 있는 아주 구체적인 꿀팁 2가지만 알려줘.
-    너는 '20년 차 에너지 절약 전문가'로서 아주 친절하고 든든하게 대답해줘야 해!
+    역할: 너는 20년 차 베테랑 '자취생 전기요금 절약 컨설턴트'야.
+    주어진 데이터를 분석해서 전기요금 주범을 찾아내고, 실천 가능한 해결책을 제시해.
+
+    [사용자 상황]
+    - 주거 형태: 한국의 1인 가구 (자취생)
+    - 이번 달 총 사용량: ${usage}kWh
+    - 예상 청구 금액: ${Number(totalBill).toLocaleString()}원
+
+    [가전제품별 사용 현황 (중요 분석 대상)]
+    ${details}
+
+    [한국 전기요금 누진세 정보 (참고 기준)]
+    - 1단계 (안전): 200kWh 이하
+    - 2단계 (보통): 201 ~ 400kWh (여기서부터 주의 필요)
+    - 3단계 (위험): 400kWh 초과 (요금 폭탄 구간, 슈퍼유저 요금)
+
+    [미션: 아래 3가지 내용을 포함해서 답변해줘]
+    1. 📊 **현재 상태 진단**: 누진세 구간을 언급하며 현재 요금 수준이 안전한지 위험한지 한 줄로 요약해.
+       (특히 200kWh나 400kWh 경계선 근처라면 강력하게 경고할 것)
+    2. 🕵️ **전기 도둑 체포**: [가전제품별 사용 현황]을 보고 가장 문제가 되는(전기를 많이 먹는) 가전제품 하나를 콕 집어서 지적해.
+    3. 💡 **즉시 실천 행동**: 그 가전제품을 어떻게 써야 돈을 아낄 수 있는지 아주 구체적인 꿀팁 1개를 줘.
+
+    [톤앤매너]
+    - 친근하지만 팩폭(팩트 폭력)을 날리는 전문가 말투.
+    - 너무 길지 않게 핵심만 딱 짚어서. (이모지 적절히 사용)
   `;
 
   try {
-    // 3. 우체부(fetch)를 통해 OpenAI에 편지 보내기
+    // 3. 실제 OpenAI 서버로 편지 보내기 (POST 요청)
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`, // 내 비밀번호를 편투 뒷면에 도장 찍기
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", // 박사님의 이름 (모델명)
+        // [핵심 변경] 모델을 더 똑똑하고 저렴한 녀석으로 교체!
+        model: "gpt-4o-mini", 
         messages: [{ role: "user", content: userPrompt }],
-        temperature: 0.7, // 답변의 창의성 수준 (너무 튀지 않게!)
+        temperature: 0.5, // 분석적인 답변을 위해 0.5 유지
+        max_tokens: 500,  // 상세 분석이라 말이 좀 길어질 수 있으니 넉넉하게
       }),
     });
 
-    // 4. 답장 읽기
+    // 4. 응답 확인 (방어 코드)
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("OpenAI API 호출 에러:", errorData);
+      throw new Error("API 호출에 실패했습니다.");
+    }
+
+    // 5. 답변 꺼내서 돌려주기
     const result = await response.json();
     return result.choices[0].message.content;
 
   } catch (error) {
-    // 에러 발생 시 처리 (방어 코드 영역)
-    console.error("AI 박사님이 아프신 것 같아요:", error);
-    throw new Error("답변을 가져오지 못했습니다.");
+    console.error("🚨 AI 연결 실패:", error);
+    return "박사님이 잠시 통화 중이시네요. (네트워크 오류 또는 API 키를 확인해주세요)";
   }
 };
