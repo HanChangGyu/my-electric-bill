@@ -175,11 +175,15 @@ function App() {
                     <div className="flex items-center">
                       <input 
                         type="number"
+                        inputMode="decimal"  // 모바일에서 무조건 숫자 키패드가 뜸!
                         step="0.1"
                         min="0"
                         max="24"
                         value={hoursData[app.id] || ''}
                         onChange={(e) => handleHoursChange(app.id, e.target.value)}
+                        onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.preventDefault();
+                        }}
                         // 입력창 크기를 키우고 스타일을 다듬음 (text-lg, p-2)
                         className="w-20 bg-white border border-gray-200 rounded-xl px-3 py-2 text-right font-bold text-blue-600 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
                         placeholder="0"
