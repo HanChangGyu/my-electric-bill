@@ -169,7 +169,7 @@ function App() {
               <div className="space-y-4">
                 {APPLIANCE_LIST.map((app) => (
                   <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all group">
-                    <span className="font-medium text-gray-700 text-lg group-hover:text-blue-600 transition-colors">
+                    <span className="font-medium text-gray-700 text-sm lg:text-lg group-hover:text-blue-600 transition-colors break-keep leading-tight">
                       {app.name}
                     </span>
                     <div className="flex items-center">

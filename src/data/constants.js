@@ -10,9 +10,9 @@ export const APPLIANCE_LIST = [
   { id: 'vacuum', name: '소형 청소기', power: 80, type: 'periodic' },
   // 냉장고는 24시간 가동을 고려하여 평균값인 30W로 조정 
   { id: 'fridge', name: '소형 냉장고', power: 30, type: 'always' },
-  { id: 'other_small', name: '기타 소형 가전 (선풍기 등)', power: 50, type: 'periodic' },
-  { id: 'other_medium', name: '기타 중형 가전 (제습기 등)', power: 300, type: 'periodic' },
-  { id: 'other_high', name: '기타 고전력 (히터/온열기)', power: 1500, type: 'periodic' }
+  { id: 'other_small', name: '소형 가전 (선풍기 등)', power: 50, type: 'periodic' },
+  { id: 'other_medium', name: '중형 가전 (제습기 등)', power: 300, type: 'periodic' },
+  { id: 'other_high', name: '고전력 (히터/온열기)', power: 1500, type: 'periodic' }
 ];
 
 // 2.  (2024년 기준)
