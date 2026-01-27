@@ -1,25 +1,19 @@
 // src/services/aiService.js
 
 /**
- * [REAL 모드] 실제 OpenAI API를 호출하여 자취생 맞춤 절약 조언을 가져옵니다.
- * - 모델: gpt-4o-mini (가성비 최강)
- * - 기능: 가전제품별 상세 내역을 분석하여 '전기 도둑'을 찾아냄
+ * [REAL 모드] Vercel Serverless Function을 통해 안전하게 OpenAI API를 호출합니다.
+ * - 클라이언트(브라우저)에는 API Key가 절대 노출되지 않습니다.
  */
 export const fetchAIAdvice = async (data) => {
-  // 1. .env에서 진짜 열쇠 꺼내기
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  // [삭제됨] 클라이언트에서 API Key를 직접 가져오는 코드는 보안상 삭제했습니다.
+  // const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
   
-  // [NEW] App.jsx에서 보낸 'details(상세 내역)'까지 받아야 함!
+  // App.jsx에서 보낸 데이터 받기
   const { usage, totalBill, details } = data;
 
-  // [방어 코드] 키가 없으면 아예 요청을 보내지 않음 (비용/에러 방지)
-  if (!apiKey || apiKey.includes("your_actual_api_key")) {
-    console.error("🚨 API 키가 설정되지 않았습니다!");
-    return "시스템 오류: API 키가 없습니다. 개발자에게 문의하세요.";
-  }
-
-  // 2. AI에게 보낼 '고지능 상황판(프롬프트)' 설계
-  // 단순 사용량뿐만 아니라, 어떤 가전을 얼마나 썼는지까지 알려줘서 정밀 분석을 시킴
+  // [삭제됨] 키 유효성 검사 로직 삭제 (서버에서 수행함)
+  
+  // 2. AI에게 보낼 '고지능 상황판(프롬프트)' 설계 (기존과 동일)
   const userPrompt = `
     역할: 너는 20년 차 베테랑 '자취생 전기요금 절약 컨설턴트'야.
     주어진 데이터를 분석해서 전기요금 주범을 찾아내고, 실천 가능한 해결책을 제시해.
@@ -53,35 +47,38 @@ export const fetchAIAdvice = async (data) => {
   `;
 
   try {
-    // 3. 실제 OpenAI 서버로 편지 보내기 (POST 요청)
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // [수정됨] OpenAI 주소 대신, 우리가 만든 Vercel API 주소로 요청을 보냅니다.
+    // [수정됨] Header에서 Authorization(API Key) 제거 (서버가 알아서 붙임)
+    const response = await fetch("/api/askAi", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        // [핵심 변경] 모델을 더 똑똑하고 저렴한 녀석으로 교체!
-        model: "gpt-4o-mini", 
+        // [수정됨] 모델명, 온도 설정 등은 보안을 위해 서버 코드(api/askAi.js)로 이동하는 것이 정석입니다.
+        // 여기서는 서버가 필요로 하는 'messages'만 깔끔하게 포장해서 보냅니다.
         messages: [{ role: "user", content: userPrompt }],
-        temperature: 0.5, // 분석적인 답변을 위해 0.5 유지
-        max_tokens: 500,  // 상세 분석이라 말이 좀 길어질 수 있으니 넉넉하게
       }),
     });
 
     // 4. 응답 확인 (방어 코드)
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenAI API 호출 에러:", errorData);
-      throw new Error("API 호출에 실패했습니다.");
+      // 서버에서 에러 메시지를 보냈을 경우를 대비해 json 파싱 시도
+      try {
+        const errorData = await response.json();
+        console.error("서버 에러 응답:", errorData);
+      } catch (e) {
+        console.error("서버 에러 (파싱 불가):", response.statusText);
+      }
+      throw new Error("AI 분석 서버 연결 실패");
     }
 
-    // 5. 답변 꺼내서 돌려주기
+    // 5. 답변 꺼내서 돌려주기 (구조는 동일)
     const result = await response.json();
     return result.choices[0].message.content;
 
   } catch (error) {
     console.error("🚨 AI 연결 실패:", error);
-    return "박사님이 잠시 통화 중이시네요. (네트워크 오류 또는 API 키를 확인해주세요)";
+    return "박사님이 잠시 통화 중이시네요. (잠시 후 다시 시도해주세요)";
   }
 };
