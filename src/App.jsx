@@ -308,9 +308,9 @@ function App() {
                 </div>
               </div>
 
-              {/* [수익화] CTA 버튼 - 전기세 절약 가전제품 추천 링크 (쿠팡) - Primary 스타일로 가장 위에 배치 */}
+              {/* [수익화] CTA 버튼 - 전기세 절약 가전제품 추천 링크 (쿠팡파트너스) - Primary 스타일로 가장 위에 배치 */}
               <a
-                href="https://www.coupang.com"
+                href="https://link.coupang.com/a/dDP0dX"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-5 rounded-2xl font-bold text-white text-lg shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 relative z-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-2 border-blue-500"
