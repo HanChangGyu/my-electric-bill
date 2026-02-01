@@ -227,11 +227,77 @@ function App() {
                     {totalKwh.toFixed(1)} <span className="text-base font-normal text-gray-400">kWh</span>
                   </span>
                 </div>
+
+                {/* [수익화] 누진세 게이지 바 - 사용량에 따라 색상이 변하는 시각적 공포 조성 요소 */}
+                <div className="space-y-2">
+                  {/* 누진세 단계 표시: 0~200(초록), 201~400(주황), 400+(빨강) */}
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600 font-medium">누진세 단계</span>
+                    <span className={`font-bold ${
+                      totalKwh <= 200 ? 'text-green-600' : 
+                      totalKwh <= 400 ? 'text-orange-600' : 
+                      'text-red-600'
+                    }`}>
+                      {totalKwh <= 200 ? '1단계 (안전)' : 
+                       totalKwh <= 400 ? '2단계 (주의)' : 
+                       '3단계 (위험)'}
+                    </span>
+                  </div>
+                  {/* 게이지 바 배경 (회색) */}
+                  <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
+                    {/* 게이지 바 진행률: 사용량에 따라 색상과 너비가 동적으로 변경됨 */}
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${
+                        totalKwh <= 200 ? 'bg-gradient-to-r from-green-400 to-green-600' : 
+                        totalKwh <= 400 ? 'bg-gradient-to-r from-orange-400 to-orange-600' : 
+                        'bg-gradient-to-r from-red-400 to-red-600'
+                      }`}
+                      style={{
+                        width: `${Math.min((totalKwh / 600) * 100, 100)}%` // 최대 600kWh 기준으로 진행률 계산
+                      }}
+                    >
+                      {/* 펄스 애니메이션 효과로 시각적 임팩트 강화 */}
+                      <div className="h-full w-full bg-white bg-opacity-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  {/* 게이지 바 하단 기준점 표시 (0, 200, 400, 600+) */}
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>0 kWh</span>
+                    <span className={totalKwh <= 200 ? 'text-green-600 font-bold' : ''}>200 kWh</span>
+                    <span className={totalKwh > 200 && totalKwh <= 400 ? 'text-orange-600 font-bold' : ''}>400 kWh</span>
+                    <span className={totalKwh > 400 ? 'text-red-600 font-bold' : ''}>600+ kWh</span>
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center bg-blue-50 p-5 rounded-2xl border border-blue-100">
                   <span className="text-blue-800 font-bold">예상 요금</span>
                   <span className="text-3xl font-extrabold text-blue-600 tracking-tight">
                     {formatCurrency(totalBill)}
                   </span>
+                </div>
+
+                {/* [수익화] 독설 멘트 - 사용량에 따라 위험도를 강조하는 메시지 표시 */}
+                <div className={`p-4 rounded-xl border-2 ${
+                  totalKwh <= 200 
+                    ? 'bg-green-50 border-green-200' 
+                    : totalKwh <= 400 
+                    ? 'bg-orange-50 border-orange-200' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  {/* 사용량 구간별로 다른 경고 메시지 표시 */}
+                  <p className={`font-bold text-center text-lg ${
+                    totalKwh <= 200 
+                      ? 'text-green-700' 
+                      : totalKwh <= 400 
+                      ? 'text-orange-700' 
+                      : 'text-red-700'
+                  }`}>
+                    {totalKwh <= 200 
+                      ? '✅ 아직은 안전합니다. 이대로 유지하세요!' 
+                      : totalKwh <= 400 
+                      ? '⚠️ 위험! 누진세 폭탄 진입 직전입니다!' 
+                      : '🚨 긴급! 누진세 폭탄이 터졌습니다! 즉시 조치가 필요합니다!'}
+                  </p>
                 </div>
                 
                 <div className="mt-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -242,13 +308,29 @@ function App() {
                 </div>
               </div>
 
+              {/* [수익화] CTA 버튼 - 전기세 절약 가전제품 추천 링크 (쿠팡) - Primary 스타일로 가장 위에 배치 */}
+              <a
+                href="https://www.coupang.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-5 rounded-2xl font-bold text-white text-lg shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 relative z-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-2 border-blue-500"
+                style={{
+                  boxShadow: '0 10px 25px rgba(37, 99, 235, 0.4)' // 파란색 그림자로 눈에 띄게 강조
+                }}
+              >
+                <span className="text-xl">💰</span>
+                <span>전기세 30% 아끼는 1등급 가전 추천</span>
+                <span className="text-sm opacity-90">→</span>
+              </a>
+
+              {/* AI 버튼 - Secondary 스타일로 덜 눈에 띄게 배치 */}
               <button
                 onClick={handleAskAI}
                 disabled={isLoading}
-                className={`w-full py-4 rounded-2xl font-bold text-white text-lg shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 relative z-10
+                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all transform hover:-translate-y-0.5 active:scale-95 flex justify-center items-center gap-2 relative z-10 mt-4
                   ${isLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'}`}
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                    : 'bg-transparent text-gray-600 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50'}`}
               >
                 {isLoading ? (
                   <>
