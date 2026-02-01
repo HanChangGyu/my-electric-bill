@@ -323,6 +323,11 @@ function App() {
                 <span className="text-sm opacity-90">→</span>
               </a>
 
+              {/* 쿠팡 파트너스 법적 고지 */}
+              <p className="text-center text-gray-400 mt-2" style={{ fontSize: '0.7rem' }}>
+                이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+              </p>
+
               {/* AI 버튼 - Secondary 스타일로 덜 눈에 띄게 배치 */}
               <button
                 onClick={handleAskAI}
