@@ -6,6 +6,12 @@ import { fetchAIAdvice } from './services/aiService';
 function App() {
   const [voltageType, setVoltageType] = useState('LOW_VOLTAGE');
 
+  // 기본 생활 전력 (조명, 멀티탭, 충전기 등) - kWh 직접 입력
+  const [basePowerKwh, setBasePowerKwh] = useState(() => {
+    const saved = localStorage.getItem('BASE_POWER_KWH');
+    return saved ? Number(saved) : 50; // 기본값 50 kWh
+  });
+
   // [🛡️ 방어 코드] 초기값 설정 (냉장고 24시간 고정 등)
   const [hoursData, setHoursData] = useState(() => {
     // localStorage에서 불러오거나 초기값 사용
@@ -31,6 +37,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('APPLIANCE_HOURS', JSON.stringify(hoursData));
   }, [hoursData]);
+
+  useEffect(() => {
+    localStorage.setItem('BASE_POWER_KWH', basePowerKwh.toString());
+  }, [basePowerKwh]);
 
   // [UI Helper] AI 응답 텍스트 포매팅
   const formatAIResponse = (text) => {
@@ -58,6 +68,14 @@ function App() {
     if (aiAdvice) setAiAdvice(""); // 값이 바뀌면 기존 조언 초기화
   };
 
+  // 기본 생활 전력(kWh) 입력 핸들러
+  const handleBasePowerChange = (value) => {
+    let numValue = Number(value);
+    if (isNaN(numValue) || numValue < 0) numValue = 0;
+    setBasePowerKwh(numValue);
+    if (aiAdvice) setAiAdvice(""); // 값이 바뀌면 기존 조언 초기화
+  };
+
   // 데이터 가공 (계산용)
   const selectedWithHours = APPLIANCE_LIST.map(app => {
     const power = app.power || 0;
@@ -65,7 +83,8 @@ function App() {
     return { ...app, power, type, hours: hoursData[app.id] || 0 };
   });
 
-  const totalKwh = calculateTotalUsage(selectedWithHours);
+  // 총 사용량 계산: 가전제품 사용량 + 기본 생활 전력
+  const totalKwh = calculateTotalUsage(selectedWithHours) + basePowerKwh;
   const totalBill = calculateBill(totalKwh, voltageType);
 
   // AI 요청 핸들러
@@ -106,10 +125,12 @@ function App() {
     setAiAdvice("");
 
     try {
-      const details = selectedWithHours
-        .filter(app => app.hours > 0)
-        .map(app => `- ${app.name}: 하루 ${app.hours}시간`)
-        .join("\n");
+      const details = [
+        `- 기본 생활 전력: ${basePowerKwh.toFixed(1)} kWh`,
+        ...selectedWithHours
+          .filter(app => app.hours > 0)
+          .map(app => `- ${app.name}: 하루 ${app.hours}시간`)
+      ].join("\n");
 
       const advice = await fetchAIAdvice({
         usage: totalKwh.toFixed(1),
@@ -180,6 +201,34 @@ function App() {
                 🔌 <span className="ml-2">가전제품 사용 시간</span>
               </h2>
               <div className="space-y-4">
+                {/* 기본 생활 전력 항목 - 맨 위에 배치 */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all group">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-gray-700 text-base lg:text-lg group-hover:text-blue-600 transition-colors break-keep leading-tight">
+                      기본 생활 전력 (조명, 멀티탭, 충전기 등)
+                    </span>
+                    <span className="text-xs text-gray-400 mt-1">
+                      원룸 평균 숨만 쉬어도 나가는 전기량입니다
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      min="0"
+                      value={basePowerKwh || ''}
+                      onChange={(e) => handleBasePowerChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.preventDefault();
+                      }}
+                      className="w-24 bg-white border border-gray-200 rounded-xl px-3 py-3 text-right font-bold text-blue-600 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
+                      placeholder="50"
+                    />
+                    <span className="text-base text-gray-400 ml-3 font-medium">kWh</span>
+                  </div>
+                </div>
+
                 {APPLIANCE_LIST.map((app) => (
                   <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all group">
                     {/* [수정] 모바일 가독성: text-base(16px) 적용 */}
