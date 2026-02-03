@@ -97,23 +97,27 @@ const GamingPcRow = memo(function GamingPcRow({
                     e.stopPropagation();
                     onTierChange(t.key);
                   }}
-                  className={`rounded-xl px-3 py-3 text-left border transition-all active:scale-[0.99]
+                  className={`rounded-xl px-3 py-2.5 text-center border transition-all active:scale-[0.99] flex flex-col items-center justify-center min-h-[60px]
                     ${isActive
                       ? 'bg-white border-blue-300 shadow-sm'
                       : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}
                 >
-                  <div className={`font-extrabold text-base leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
+                  <div className={`font-bold text-sm leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
                     {t.label}
                   </div>
-                  <div className="text-[0.7rem] text-gray-400 leading-snug mt-1">
-                    {t.desc}
-                  </div>
-                  <div className={`text-xs font-bold mt-2 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                  <div className={`text-xs font-bold mt-1 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
                     {t.watt}W
                   </div>
                 </button>
               );
             })}
+          </div>
+
+          {/* 선택된 항목 설명 영역 */}
+          <div className="px-2 py-2 bg-gray-100 rounded-lg">
+            <p className="text-xs text-gray-500 text-center">
+              💡 {tier.desc}
+            </p>
           </div>
 
           {/* 시간 슬라이더 (0~24h) */}
@@ -225,23 +229,27 @@ const PetCareRow = memo(function PetCareRow({
                     e.stopPropagation();
                     onTierChange(t.key);
                   }}
-                  className={`rounded-xl px-3 py-3 text-left border transition-all active:scale-[0.99]
+                  className={`rounded-xl px-3 py-2.5 text-center border transition-all active:scale-[0.99] flex flex-col items-center justify-center min-h-[60px]
                     ${isActive
                       ? 'bg-white border-blue-300 shadow-sm'
                       : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}
                 >
-                  <div className={`font-extrabold text-base leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
+                  <div className={`font-bold text-sm leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
                     {t.label}
                   </div>
-                  <div className="text-[0.7rem] text-gray-400 leading-snug mt-1">
-                    {t.desc}
-                  </div>
-                  <div className={`text-xs font-bold mt-2 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                  <div className={`text-xs font-bold mt-1 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
                     {t.watt}W
                   </div>
                 </button>
               );
             })}
+          </div>
+
+          {/* 선택된 항목 설명 영역 */}
+          <div className="px-2 py-2 bg-gray-100 rounded-lg">
+            <p className="text-xs text-gray-500 text-center">
+              🐾 {tier.desc}
+            </p>
           </div>
 
           {/* 시간 슬라이더 (0~24h) */}
@@ -684,30 +692,34 @@ function App() {
               </h2>
               <div className="space-y-4">
                 {/* 기본 생활 전력 항목 - 맨 위에 배치 */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all group">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-gray-700 text-base lg:text-lg group-hover:text-blue-600 transition-colors break-keep leading-tight">
-                      기본 생활 전력 (조명, 멀티탭, 충전기 등)
+                <div className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all">
+                  {/* 가로 배치: 왼쪽 제목, 오른쪽 입력창+단위 */}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-bold text-gray-700 text-base lg:text-lg break-keep leading-tight shrink-0">
+                      💡 기본 생활 전력
                     </span>
-                    <span className="text-xs text-gray-400 mt-1">
-                      원룸 평균 숨만 쉬어도 나가는 전기량입니다
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.1"
+                        min="0"
+                        value={basePowerKwh || ''}
+                        onChange={(e) => handleBasePowerChange(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.preventDefault();
+                        }}
+                        className="w-20 bg-gray-100 border-0 rounded-lg px-3 py-2 text-right font-bold text-blue-600 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                        placeholder="50"
+                      />
+                      <span className="text-sm text-gray-400 font-medium">kWh</span>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.1"
-                      min="0"
-                      value={basePowerKwh || ''}
-                      onChange={(e) => handleBasePowerChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') e.preventDefault();
-                      }}
-                      className="w-24 bg-white border border-gray-200 rounded-xl px-3 py-3 text-right font-bold text-blue-600 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
-                      placeholder="50"
-                    />
-                    <span className="text-base text-gray-400 ml-3 font-medium">kWh</span>
+                  {/* 설명 텍스트: 입력창 아래 작은 회색 텍스트 */}
+                  <div className="mt-2 ml-0">
+                    <span className="text-[0.65rem] text-gray-400">
+                      조명, 멀티탭, 충전기 등 · 원룸 평균 숨만 쉬어도 나가는 전기량
+                    </span>
                   </div>
                 </div>
 
