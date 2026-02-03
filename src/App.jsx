@@ -1,15 +1,119 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { APPLIANCE_LIST } from './data/constants';
 import { calculateTotalUsage, calculateBill, formatCurrency } from './utils/calculate';
 import { fetchAIAdvice } from './services/aiService';
+
+// 게이밍 PC: 등급(Tier)별 소비전력 정의
+const GAMING_PC_TIERS = [
+  { key: 'light', label: '라이트', watt: 250, desc: 'GTX 1660 / RTX 3050 급' },
+  { key: 'middle', label: '미들', watt: 300, desc: 'RTX 3060 ~ 4060 급' },
+  { key: 'highend', label: '하이엔드', watt: 400, desc: 'RTX 4070 이상' },
+];
+
+const getGamingPcTier = (key) => GAMING_PC_TIERS.find(t => t.key === key) || GAMING_PC_TIERS[1];
+
+// 게이밍 PC 입력 블록 (memo + 안정적인 콜백으로 불필요 리렌더 최소화)
+const GamingPcRow = memo(function GamingPcRow({
+  tierKey,
+  hours,
+  onTierChange,
+  onHoursChange,
+}) {
+  const tier = getGamingPcTier(tierKey);
+  const monthlyKwh = (tier.watt * hours * 30) / 1000;
+
+  return (
+    <div className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col">
+          <span className="font-bold text-gray-700 text-base lg:text-lg break-keep leading-tight">
+            게이밍 컴퓨터 (본체+모니터)
+          </span>
+          <span className="text-xs text-gray-400 mt-1">
+            등급(사양) + 사용시간으로 전력 소모를 계산합니다
+          </span>
+        </div>
+
+        {/* 현재 선택 요약 */}
+        <div className="text-right shrink-0">
+          <div className="text-xs text-gray-400">
+            선택: <span className="font-bold text-gray-600">{tier.label}</span>
+          </div>
+          <div className="text-sm font-extrabold text-gray-800">
+            {tier.watt}W · {monthlyKwh.toFixed(1)}kWh/월
+          </div>
+        </div>
+      </div>
+
+      {/* 등급 선택 버튼 3개 */}
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        {GAMING_PC_TIERS.map((t) => {
+          const isActive = tierKey === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onTierChange(t.key)}
+              className={`rounded-xl px-3 py-3 text-left border transition-all active:scale-[0.99]
+                ${isActive
+                  ? 'bg-white border-blue-300 shadow-sm'
+                  : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}
+            >
+              <div className={`font-extrabold text-base leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
+                {t.label}
+              </div>
+              <div className="text-[0.7rem] text-gray-400 leading-snug mt-1">
+                {t.desc}
+              </div>
+              <div className={`text-xs font-bold mt-2 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                {t.watt}W
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 시간 슬라이더 (0~24h) */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-bold text-gray-600">하루 사용 시간</span>
+          <span className="text-sm font-extrabold text-blue-600">
+            {Number(hours).toFixed(1)}시간
+          </span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="24"
+          step="0.5"
+          value={hours}
+          onChange={(e) => onHoursChange(e.target.value)}
+          className="w-full accent-blue-600"
+        />
+        <div className="flex justify-between text-xs text-gray-400 mt-2">
+          <span>0h</span>
+          <span>12h</span>
+          <span>24h</span>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 function App() {
   const [voltageType, setVoltageType] = useState('LOW_VOLTAGE');
 
   // 기본 생활 전력 (조명, 멀티탭, 충전기 등) - kWh 직접 입력
   const [basePowerKwh, setBasePowerKwh] = useState(() => {
-    const saved = localStorage.getItem('BASE_POWER_KWH');
-    return saved ? Number(saved) : 50; // 기본값 50 kWh
+    try {
+      const saved = localStorage.getItem('BASE_POWER_KWH');
+      const num = saved != null ? Number(saved) : 50;
+      // 방어: NaN/Infinity 방지
+      return Number.isFinite(num) ? Math.max(num, 0) : 50; // 기본값 50 kWh
+    } catch {
+      // 일부 브라우저/설정에서 localStorage 접근이 막혀도 앱이 죽지 않도록 기본값 사용
+      return 50;
+    }
   });
 
   // [🛡️ 방어 코드] 초기값 설정 (냉장고 24시간 고정 등)
@@ -25,6 +129,27 @@ function App() {
 
   const [aiAdvice, setAiAdvice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // 게이밍 PC 기본값: 미들(300W) + 4시간
+  const [gamingPcTier, setGamingPcTier] = useState(() => {
+    try {
+      const saved = localStorage.getItem('GAMING_PC_TIER');
+      const isValid = GAMING_PC_TIERS.some(t => t.key === saved);
+      return isValid ? saved : 'middle';
+    } catch {
+      return 'middle';
+    }
+  });
+
+  const [gamingPcHours, setGamingPcHours] = useState(() => {
+    try {
+      const saved = localStorage.getItem('GAMING_PC_HOURS');
+      const num = saved != null ? Number(saved) : 4;
+      return Number.isFinite(num) ? Math.min(Math.max(num, 0), 24) : 4;
+    } catch {
+      return 4;
+    }
+  });
   
   // 팝업 닫기
   const closePopup = () => setAiAdvice("");
@@ -35,11 +160,19 @@ function App() {
 
   // 상태 변경 시 localStorage 저장 (데이터 지속성)
   useEffect(() => {
-    localStorage.setItem('APPLIANCE_HOURS', JSON.stringify(hoursData));
+    try {
+      localStorage.setItem('APPLIANCE_HOURS', JSON.stringify(hoursData));
+    } catch {
+      // localStorage 저장 실패는 UI를 막지 않음
+    }
   }, [hoursData]);
 
   useEffect(() => {
-    localStorage.setItem('BASE_POWER_KWH', basePowerKwh.toString());
+    try {
+      localStorage.setItem('BASE_POWER_KWH', basePowerKwh.toString());
+    } catch {
+      // localStorage 저장 실패는 UI를 막지 않음
+    }
   }, [basePowerKwh]);
 
   // [UI Helper] AI 응답 텍스트 포매팅
@@ -76,12 +209,51 @@ function App() {
     if (aiAdvice) setAiAdvice(""); // 값이 바뀌면 기존 조언 초기화
   };
 
+  // 게이밍 PC 변경은 "사용자 이벤트"에서만 발생 (렌더 중 setState 금지)
+  const handleGamingPcTierChange = useCallback((nextTier) => {
+    setGamingPcTier((prev) => {
+      if (prev === nextTier) return prev; // 동일 값이면 상태 업데이트 생략
+      return nextTier;
+    });
+    try { localStorage.setItem('GAMING_PC_TIER', nextTier); } catch { /* ignore */ }
+    if (aiAdvice) setAiAdvice("");
+  }, [aiAdvice]);
+
+  const handleGamingPcHoursChange = useCallback((value) => {
+    let numValue = Number(value);
+    if (isNaN(numValue)) numValue = 0;
+    if (numValue > 24) numValue = 24;
+    if (numValue < 0) numValue = 0;
+
+    setGamingPcHours((prev) => {
+      if (prev === numValue) return prev; // 동일 값이면 상태 업데이트 생략
+      return numValue;
+    });
+    try { localStorage.setItem('GAMING_PC_HOURS', String(numValue)); } catch { /* ignore */ }
+    if (aiAdvice) setAiAdvice("");
+  }, [aiAdvice]);
+
   // 데이터 가공 (계산용)
-  const selectedWithHours = APPLIANCE_LIST.map(app => {
-    const power = app.power || 0;
-    const type = app.type || 'periodic';
-    return { ...app, power, type, hours: hoursData[app.id] || 0 };
-  });
+  const gamingTier = getGamingPcTier(gamingPcTier);
+
+  const selectedWithHours = useMemo(() => {
+    const base = APPLIANCE_LIST.map(app => {
+      const power = app.power || 0;
+      const type = app.type || 'periodic';
+      return { ...app, power, type, hours: hoursData[app.id] || 0 };
+    });
+
+    // 게이밍 PC는 "가상 가전 1개"로 추가 → 기존 calculateTotalUsage 로직 재사용
+    base.push({
+      id: 'gaming_pc',
+      name: '게이밍 컴퓨터 (본체+모니터)',
+      power: gamingTier.watt,
+      type: 'periodic',
+      hours: gamingPcHours,
+    });
+
+    return base;
+  }, [hoursData, gamingTier.watt, gamingPcHours]);
 
   // 총 사용량 계산: 가전제품 사용량 + 기본 생활 전력
   const totalKwh = calculateTotalUsage(selectedWithHours) + basePowerKwh;
@@ -129,7 +301,12 @@ function App() {
         `- 기본 생활 전력: ${basePowerKwh.toFixed(1)} kWh`,
         ...selectedWithHours
           .filter(app => app.hours > 0)
-          .map(app => `- ${app.name}: 하루 ${app.hours}시간`)
+          .map(app => {
+            if (app.id === 'gaming_pc') {
+              return `- ${app.name}: ${gamingTier.label}(${gamingTier.watt}W) 하루 ${app.hours}시간`;
+            }
+            return `- ${app.name}: 하루 ${app.hours}시간`;
+          })
       ].join("\n");
 
       const advice = await fetchAIAdvice({
@@ -228,6 +405,14 @@ function App() {
                     <span className="text-base text-gray-400 ml-3 font-medium">kWh</span>
                   </div>
                 </div>
+
+                {/* 게이밍 컴퓨터: 등급 버튼 + 시간 슬라이더 (기본 전력 바로 아래) */}
+                <GamingPcRow
+                  tierKey={gamingPcTier}
+                  hours={gamingPcHours}
+                  onTierChange={handleGamingPcTierChange}
+                  onHoursChange={handleGamingPcHoursChange}
+                />
 
                 {APPLIANCE_LIST.map((app) => (
                   <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all group">
