@@ -12,90 +12,130 @@ const GAMING_PC_TIERS = [
 
 const getGamingPcTier = (key) => GAMING_PC_TIERS.find(t => t.key === key) || GAMING_PC_TIERS[1];
 
-// 게이밍 PC 입력 블록 (memo + 안정적인 콜백으로 불필요 리렌더 최소화)
+// 게이밍 PC 입력 블록 (아코디언 UI: 토글 ON/OFF로 펼침/접힘)
 const GamingPcRow = memo(function GamingPcRow({
+  isEnabled,
   tierKey,
   hours,
+  onToggle,
   onTierChange,
   onHoursChange,
 }) {
   const tier = getGamingPcTier(tierKey);
-  const monthlyKwh = (tier.watt * hours * 30) / 1000;
+  const monthlyKwh = isEnabled ? (tier.watt * hours * 30) / 1000 : 0;
 
   return (
-    <div className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col">
-          <span className="font-bold text-gray-700 text-base lg:text-lg break-keep leading-tight">
-            게이밍 컴퓨터 (본체+모니터)
-          </span>
-          <span className="text-xs text-gray-400 mt-1">
-            등급(사양) + 사용시간으로 전력 소모를 계산합니다
-          </span>
-        </div>
-
-        {/* 현재 선택 요약 */}
-        <div className="text-right shrink-0">
-          <div className="text-xs text-gray-400">
-            선택: <span className="font-bold text-gray-600">{tier.label}</span>
+    <div className="bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all overflow-hidden">
+      {/* 헤더: 제목 + 토글 스위치 (항상 표시) */}
+      <div 
+        className="flex items-center justify-between p-4 cursor-pointer"
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🎮</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-gray-700 text-base lg:text-lg break-keep leading-tight">
+              게이밍 컴퓨터 (본체+모니터)
+            </span>
+            {isEnabled && (
+              <span className="text-xs text-gray-400 mt-1">
+                {tier.label} · {monthlyKwh.toFixed(1)}kWh/월
+              </span>
+            )}
           </div>
-          <div className="text-sm font-extrabold text-gray-800">
-            {tier.watt}W · {monthlyKwh.toFixed(1)}kWh/월
+        </div>
+
+        {/* 토글 스위치 (우측 상단) */}
+        <label 
+          className="relative inline-flex items-center cursor-pointer shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={isEnabled}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="sr-only peer"
+          />
+          <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${
+            isEnabled ? 'bg-blue-600' : 'bg-gray-300'
+          }`}>
+            <div className={`h-5 w-5 bg-white rounded-full shadow-md transform transition-transform duration-200 mt-[2px] ${
+              isEnabled ? 'translate-x-5 ml-[2px]' : 'translate-x-0 ml-[2px]'
+            }`}></div>
+          </div>
+        </label>
+      </div>
+
+      {/* 아코디언 내용: 토글이 ON일 때만 표시 */}
+      {isEnabled && (
+        <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          {/* 등급 선택 버튼 3개 */}
+          <div className="grid grid-cols-3 gap-2">
+            {GAMING_PC_TIERS.map((t) => {
+              const isActive = tierKey === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTierChange(t.key);
+                  }}
+                  className={`rounded-xl px-3 py-3 text-left border transition-all active:scale-[0.99]
+                    ${isActive
+                      ? 'bg-white border-blue-300 shadow-sm'
+                      : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}
+                >
+                  <div className={`font-extrabold text-base leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
+                    {t.label}
+                  </div>
+                  <div className="text-[0.7rem] text-gray-400 leading-snug mt-1">
+                    {t.desc}
+                  </div>
+                  <div className={`text-xs font-bold mt-2 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                    {t.watt}W
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 시간 슬라이더 (0~24h) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-gray-600">하루 사용 시간</span>
+              <span className="text-sm font-extrabold text-blue-600">
+                {Number(hours).toFixed(1)}시간
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="24"
+              step="0.5"
+              value={hours}
+              onChange={(e) => {
+                e.stopPropagation();
+                onHoursChange(e.target.value);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full accent-blue-600"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>0h</span>
+              <span>12h</span>
+              <span>24h</span>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* 등급 선택 버튼 3개 */}
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        {GAMING_PC_TIERS.map((t) => {
-          const isActive = tierKey === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => onTierChange(t.key)}
-              className={`rounded-xl px-3 py-3 text-left border transition-all active:scale-[0.99]
-                ${isActive
-                  ? 'bg-white border-blue-300 shadow-sm'
-                  : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}
-            >
-              <div className={`font-extrabold text-base leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
-                {t.label}
-              </div>
-              <div className="text-[0.7rem] text-gray-400 leading-snug mt-1">
-                {t.desc}
-              </div>
-              <div className={`text-xs font-bold mt-2 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
-                {t.watt}W
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 시간 슬라이더 (0~24h) */}
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-gray-600">하루 사용 시간</span>
-          <span className="text-sm font-extrabold text-blue-600">
-            {Number(hours).toFixed(1)}시간
-          </span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="24"
-          step="0.5"
-          value={hours}
-          onChange={(e) => onHoursChange(e.target.value)}
-          className="w-full accent-blue-600"
-        />
-        <div className="flex justify-between text-xs text-gray-400 mt-2">
-          <span>0h</span>
-          <span>12h</span>
-          <span>24h</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 });
@@ -150,6 +190,16 @@ function App() {
       return 4;
     }
   });
+
+  // 게이밍 PC 활성화 여부 (아코디언 ON/OFF) - 기본값: OFF
+  const [isGamingPcEnabled, setIsGamingPcEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem('GAMING_PC_ENABLED');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
   
   // 팝업 닫기
   const closePopup = () => setAiAdvice("");
@@ -174,6 +224,15 @@ function App() {
       // localStorage 저장 실패는 UI를 막지 않음
     }
   }, [basePowerKwh]);
+
+  // 게이밍 PC 활성화 상태 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('GAMING_PC_ENABLED', String(isGamingPcEnabled));
+    } catch {
+      // localStorage 저장 실패는 UI를 막지 않음
+    }
+  }, [isGamingPcEnabled]);
 
   // [UI Helper] AI 응답 텍스트 포매팅
   const formatAIResponse = (text) => {
@@ -233,6 +292,12 @@ function App() {
     if (aiAdvice) setAiAdvice("");
   }, [aiAdvice]);
 
+  // 게이밍 PC 토글 핸들러
+  const handleGamingPcToggle = useCallback(() => {
+    setIsGamingPcEnabled((prev) => !prev);
+    if (aiAdvice) setAiAdvice("");
+  }, [aiAdvice]);
+
   // 데이터 가공 (계산용)
   const gamingTier = getGamingPcTier(gamingPcTier);
 
@@ -243,17 +308,19 @@ function App() {
       return { ...app, power, type, hours: hoursData[app.id] || 0 };
     });
 
-    // 게이밍 PC는 "가상 가전 1개"로 추가 → 기존 calculateTotalUsage 로직 재사용
-    base.push({
-      id: 'gaming_pc',
-      name: '게이밍 컴퓨터 (본체+모니터)',
-      power: gamingTier.watt,
-      type: 'periodic',
-      hours: gamingPcHours,
-    });
+    // 게이밍 PC는 활성화되어 있을 때만 "가상 가전 1개"로 추가 → 기존 calculateTotalUsage 로직 재사용
+    if (isGamingPcEnabled) {
+      base.push({
+        id: 'gaming_pc',
+        name: '게이밍 컴퓨터 (본체+모니터)',
+        power: gamingTier.watt,
+        type: 'periodic',
+        hours: gamingPcHours,
+      });
+    }
 
     return base;
-  }, [hoursData, gamingTier.watt, gamingPcHours]);
+  }, [hoursData, gamingTier.watt, gamingPcHours, isGamingPcEnabled]);
 
   // 총 사용량 계산: 가전제품 사용량 + 기본 생활 전력
   const totalKwh = calculateTotalUsage(selectedWithHours) + basePowerKwh;
@@ -406,10 +473,12 @@ function App() {
                   </div>
                 </div>
 
-                {/* 게이밍 컴퓨터: 등급 버튼 + 시간 슬라이더 (기본 전력 바로 아래) */}
+                {/* 게이밍 컴퓨터: 아코디언 UI (기본 전력 바로 아래) */}
                 <GamingPcRow
+                  isEnabled={isGamingPcEnabled}
                   tierKey={gamingPcTier}
                   hours={gamingPcHours}
+                  onToggle={handleGamingPcToggle}
                   onTierChange={handleGamingPcTierChange}
                   onHoursChange={handleGamingPcHoursChange}
                 />
