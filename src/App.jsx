@@ -12,6 +12,15 @@ const GAMING_PC_TIERS = [
 
 const getGamingPcTier = (key) => GAMING_PC_TIERS.find(t => t.key === key) || GAMING_PC_TIERS[1];
 
+// 반려동물 케어: 등급(Tier)별 소비전력 정의
+const PET_CARE_TIERS = [
+  { key: 'heating_mat', label: '온열매트', watt: 40, desc: '반려동물용 전기방석 / 1인 매트' },
+  { key: 'panel_heater', label: '패널히터', watt: 300, desc: '데스크워머 / 접이식 파티션 히터' },
+  { key: 'ptc_heater', label: 'PTC 온풍기', watt: 1200, desc: '미니 온풍기 (작지만 전기 많이 먹음)' },
+];
+
+const getPetCareTier = (key) => PET_CARE_TIERS.find(t => t.key === key) || PET_CARE_TIERS[1];
+
 // 게이밍 PC 입력 블록 (아코디언 UI: 토글 ON/OFF로 펼침/접힘)
 const GamingPcRow = memo(function GamingPcRow({
   isEnabled,
@@ -140,6 +149,134 @@ const GamingPcRow = memo(function GamingPcRow({
   );
 });
 
+// 반려동물 케어 입력 블록 (아코디언 UI: 토글 ON/OFF로 펼침/접힘)
+const PetCareRow = memo(function PetCareRow({
+  isEnabled,
+  tierKey,
+  hours,
+  onToggle,
+  onTierChange,
+  onHoursChange,
+}) {
+  const tier = getPetCareTier(tierKey);
+  const monthlyKwh = isEnabled ? (tier.watt * hours * 30) / 1000 : 0;
+
+  return (
+    <div className="bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 transition-all overflow-hidden">
+      {/* 헤더: 제목 + 토글 스위치 (항상 표시) */}
+      <div 
+        className="flex items-center justify-between p-4 cursor-pointer"
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🐾</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-gray-700 text-base lg:text-lg break-keep leading-tight">
+              반려동물 케어 (강아지/고양이)
+            </span>
+            {isEnabled && (
+              <span className="text-xs text-gray-400 mt-1">
+                {tier.label} · {monthlyKwh.toFixed(1)}kWh/월
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 토글 스위치 (우측 상단) */}
+        <label 
+          className="relative inline-flex items-center cursor-pointer shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={isEnabled}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="sr-only peer"
+          />
+          <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${
+            isEnabled ? 'bg-blue-600' : 'bg-gray-300'
+          }`}>
+            <div className={`h-5 w-5 bg-white rounded-full shadow-md transform transition-transform duration-200 mt-[2px] ${
+              isEnabled ? 'translate-x-5 ml-[2px]' : 'translate-x-0 ml-[2px]'
+            }`}></div>
+          </div>
+        </label>
+      </div>
+
+      {/* 아코디언 내용: 토글이 ON일 때만 표시 */}
+      {isEnabled && (
+        <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          {/* 등급 선택 버튼 3개 */}
+          <div className="grid grid-cols-3 gap-2">
+            {PET_CARE_TIERS.map((t) => {
+              const isActive = tierKey === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTierChange(t.key);
+                  }}
+                  className={`rounded-xl px-3 py-3 text-left border transition-all active:scale-[0.99]
+                    ${isActive
+                      ? 'bg-white border-blue-300 shadow-sm'
+                      : 'bg-transparent border-gray-200 hover:bg-white hover:border-gray-300'}`}
+                >
+                  <div className={`font-extrabold text-base leading-tight ${isActive ? 'text-blue-700' : 'text-gray-700'}`}>
+                    {t.label}
+                  </div>
+                  <div className="text-[0.7rem] text-gray-400 leading-snug mt-1">
+                    {t.desc}
+                  </div>
+                  <div className={`text-xs font-bold mt-2 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                    {t.watt}W
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 시간 슬라이더 (0~24h) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-gray-600">하루 사용 시간</span>
+              <span className="text-sm font-extrabold text-blue-600">
+                {Number(hours).toFixed(1)}시간
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="24"
+              step="0.5"
+              value={hours}
+              onChange={(e) => {
+                e.stopPropagation();
+                onHoursChange(e.target.value);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full accent-blue-600"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>0h</span>
+              <span>12h</span>
+              <span>24h</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 function App() {
   const [voltageType, setVoltageType] = useState('LOW_VOLTAGE');
 
@@ -200,6 +337,37 @@ function App() {
       return false;
     }
   });
+
+  // 반려동물 케어 기본값: 패널히터(300W) + 6시간
+  const [petCareTier, setPetCareTier] = useState(() => {
+    try {
+      const saved = localStorage.getItem('PET_CARE_TIER');
+      const isValid = PET_CARE_TIERS.some(t => t.key === saved);
+      return isValid ? saved : 'panel_heater'; // 기본값: 패널히터
+    } catch {
+      return 'panel_heater';
+    }
+  });
+
+  const [petCareHours, setPetCareHours] = useState(() => {
+    try {
+      const saved = localStorage.getItem('PET_CARE_HOURS');
+      const num = saved != null ? Number(saved) : 6; // 기본값: 6시간
+      return Number.isFinite(num) ? Math.min(Math.max(num, 0), 24) : 6;
+    } catch {
+      return 6;
+    }
+  });
+
+  // 반려동물 케어 활성화 여부 (아코디언 ON/OFF) - 기본값: OFF
+  const [isPetCareEnabled, setIsPetCareEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem('PET_CARE_ENABLED');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
   
   // 팝업 닫기
   const closePopup = () => setAiAdvice("");
@@ -233,6 +401,31 @@ function App() {
       // localStorage 저장 실패는 UI를 막지 않음
     }
   }, [isGamingPcEnabled]);
+
+  // 반려동물 케어 상태 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('PET_CARE_TIER', petCareTier);
+    } catch {
+      // localStorage 저장 실패는 UI를 막지 않음
+    }
+  }, [petCareTier]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('PET_CARE_HOURS', String(petCareHours));
+    } catch {
+      // localStorage 저장 실패는 UI를 막지 않음
+    }
+  }, [petCareHours]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('PET_CARE_ENABLED', String(isPetCareEnabled));
+    } catch {
+      // localStorage 저장 실패는 UI를 막지 않음
+    }
+  }, [isPetCareEnabled]);
 
   // [UI Helper] AI 응답 텍스트 포매팅
   const formatAIResponse = (text) => {
@@ -298,8 +491,39 @@ function App() {
     if (aiAdvice) setAiAdvice("");
   }, [aiAdvice]);
 
+  // 반려동물 케어 변경은 "사용자 이벤트"에서만 발생 (렌더 중 setState 금지)
+  const handlePetCareTierChange = useCallback((nextTier) => {
+    setPetCareTier((prev) => {
+      if (prev === nextTier) return prev; // 동일 값이면 상태 업데이트 생략
+      return nextTier;
+    });
+    try { localStorage.setItem('PET_CARE_TIER', nextTier); } catch { /* ignore */ }
+    if (aiAdvice) setAiAdvice("");
+  }, [aiAdvice]);
+
+  const handlePetCareHoursChange = useCallback((value) => {
+    let numValue = Number(value);
+    if (isNaN(numValue)) numValue = 0;
+    if (numValue > 24) numValue = 24;
+    if (numValue < 0) numValue = 0;
+
+    setPetCareHours((prev) => {
+      if (prev === numValue) return prev; // 동일 값이면 상태 업데이트 생략
+      return numValue;
+    });
+    try { localStorage.setItem('PET_CARE_HOURS', String(numValue)); } catch { /* ignore */ }
+    if (aiAdvice) setAiAdvice("");
+  }, [aiAdvice]);
+
+  // 반려동물 케어 토글 핸들러
+  const handlePetCareToggle = useCallback(() => {
+    setIsPetCareEnabled((prev) => !prev);
+    if (aiAdvice) setAiAdvice("");
+  }, [aiAdvice]);
+
   // 데이터 가공 (계산용)
   const gamingTier = getGamingPcTier(gamingPcTier);
+  const petCareTierObj = getPetCareTier(petCareTier);
 
   const selectedWithHours = useMemo(() => {
     const base = APPLIANCE_LIST.map(app => {
@@ -319,8 +543,19 @@ function App() {
       });
     }
 
+    // 반려동물 케어는 활성화되어 있을 때만 "가상 가전 1개"로 추가
+    if (isPetCareEnabled) {
+      base.push({
+        id: 'pet_care',
+        name: '반려동물 케어 (강아지/고양이)',
+        power: petCareTierObj.watt,
+        type: 'periodic',
+        hours: petCareHours,
+      });
+    }
+
     return base;
-  }, [hoursData, gamingTier.watt, gamingPcHours, isGamingPcEnabled]);
+  }, [hoursData, gamingTier.watt, gamingPcHours, isGamingPcEnabled, petCareTierObj.watt, petCareHours, isPetCareEnabled]);
 
   // 총 사용량 계산: 가전제품 사용량 + 기본 생활 전력
   const totalKwh = calculateTotalUsage(selectedWithHours) + basePowerKwh;
@@ -371,6 +606,9 @@ function App() {
           .map(app => {
             if (app.id === 'gaming_pc') {
               return `- ${app.name}: ${gamingTier.label}(${gamingTier.watt}W) 하루 ${app.hours}시간`;
+            }
+            if (app.id === 'pet_care') {
+              return `- ${app.name}: ${petCareTierObj.label}(${petCareTierObj.watt}W) 하루 ${app.hours}시간`;
             }
             return `- ${app.name}: 하루 ${app.hours}시간`;
           })
@@ -481,6 +719,16 @@ function App() {
                   onToggle={handleGamingPcToggle}
                   onTierChange={handleGamingPcTierChange}
                   onHoursChange={handleGamingPcHoursChange}
+                />
+
+                {/* 반려동물 케어: 아코디언 UI (게이밍 컴퓨터 바로 아래) */}
+                <PetCareRow
+                  isEnabled={isPetCareEnabled}
+                  tierKey={petCareTier}
+                  hours={petCareHours}
+                  onToggle={handlePetCareToggle}
+                  onTierChange={handlePetCareTierChange}
+                  onHoursChange={handlePetCareHoursChange}
                 />
 
                 {APPLIANCE_LIST.map((app) => (
