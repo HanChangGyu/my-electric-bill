@@ -920,26 +920,6 @@ function App() {
                 </div>
               </div>
 
-              {/* [수익화] CTA 버튼 - 전기세 절약 가전제품 추천 링크 (쿠팡파트너스) - Primary 스타일로 가장 위에 배치 */}
-              <a
-                href="https://link.coupang.com/a/dDP0dX"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-5 rounded-2xl font-bold text-white text-lg shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 relative z-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-2 border-blue-500"
-                style={{
-                  boxShadow: '0 10px 25px rgba(37, 99, 235, 0.4)' // 파란색 그림자로 눈에 띄게 강조
-                }}
-              >
-                <span className="text-xl">💰</span>
-                <span>전기세 30% 아끼는 1등급 가전 추천</span>
-                <span className="text-sm opacity-90">→</span>
-              </a>
-
-              {/* 쿠팡 파트너스 법적 고지 */}
-              <p className="text-center text-gray-400 mt-2" style={{ fontSize: '0.7rem' }}>
-                이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
-              </p>
-
               {/* AI 버튼 - Secondary 스타일로 덜 눈에 띄게 배치 */}
               <button
                 onClick={handleAskAI}
@@ -974,6 +954,18 @@ function App() {
             </div>
           </div>
         </div>
+
+        {/* Footer: 쿠팡 파트너스 법적 고지 */}
+        <footer className="mt-16 pt-6 pb-8 border-t border-gray-200">
+          <div className="text-center space-y-2">
+            <p className="text-xs text-gray-400">
+              © 2024 자취생 전기요금 박사. All rights reserved.
+            </p>
+            <p className="text-xs text-gray-400">
+              이 서비스는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+            </p>
+          </div>
+        </footer>
       </div>
 
       {/* [수정] 모바일 하단 고정 바 (둥근 모서리 + 엄지 영역 최적화) */}
