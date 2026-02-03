@@ -685,10 +685,10 @@ function App() {
         {/* 헤더 섹션 */}
         <div className="text-center mb-12">
           <h1 className="text-3xl lg:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight break-keep">
-            ⚡ 자취생 전기요금 박사
+            ⚡우리집 전기요금 지킴이
           </h1>
           <p className="text-gray-500 text-lg">
-            이번 달 전기세 폭탄? <br className="block lg:hidden" /> 미리 계산하고 스마트하게 막아보세요!
+            이번 달 전기세 폭탄 범인은? <br className="block lg:hidden" /> 주범을 3초 만에 검거해 드립니다.
           </p>
         </div>
 
