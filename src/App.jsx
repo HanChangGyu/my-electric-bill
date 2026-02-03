@@ -147,6 +147,23 @@ const GamingPcRow = memo(function GamingPcRow({
               <span>24h</span>
             </div>
           </div>
+
+          {/* 추천 상품 알림 띠: IoT 스마트 플러그 */}
+          <a
+            href="https://link.coupang.com/a/dFbe33"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-between gap-2 px-3 py-2.5 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-all group"
+          >
+            <span className="text-sm"></span>
+            <span className="text-xs text-gray-700 font-medium flex-1">
+            📊실시간 전력 측정 + 폰으로 끄기 (1만원대)
+            </span>
+            <span className="text-yellow-700 font-bold text-sm shrink-0 group-hover:translate-x-0.5 transition-transform">
+              {'>'}
+            </span>
+          </a>
         </div>
       )}
     </div>
@@ -279,6 +296,23 @@ const PetCareRow = memo(function PetCareRow({
               <span>24h</span>
             </div>
           </div>
+
+          {/* 추천 상품 알림 띠: 화재 차단 멀티탭 */}
+          <a
+            href="https://link.coupang.com/a/dFbluE"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-between gap-2 px-3 py-2.5 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-all group"
+          >
+            <span className="text-sm">🔥</span>
+            <span className="text-xs text-gray-700 font-medium flex-1">
+              털 끼임 화재 방지 멀티탭 보기
+            </span>
+            <span className="text-yellow-700 font-bold text-sm shrink-0 group-hover:translate-x-0.5 transition-transform">
+              {'>'}
+            </span>
+          </a>
         </div>
       )}
     </div>
@@ -721,6 +755,21 @@ function App() {
                       조명, 멀티탭, 충전기 등 · 원룸 평균 숨만 쉬어도 나가는 전기량
                     </span>
                   </div>
+                  {/* 추천 상품 알림 띠: 개별 스위치 멀티탭 */}
+                  <a
+                    href="https://link.coupang.com/a/dFbo5E"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 px-3 py-2.5 mt-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-all group"
+                  >
+                    <span className="text-sm">💰</span>
+                    <span className="text-xs text-gray-700 font-medium flex-1">
+                      대기전력 차단! 절약형 멀티탭
+                    </span>
+                    <span className="text-yellow-700 font-bold text-sm shrink-0 group-hover:translate-x-0.5 transition-transform">
+                      {'>'}
+                    </span>
+                  </a>
                 </div>
 
                 {/* 게이밍 컴퓨터: 아코디언 UI (기본 전력 바로 아래) */}
